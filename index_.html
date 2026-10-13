@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Praktik Organisasi File - BDF</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2pdf.js untuk export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --primary-navy: #0f172a;
+            --primary-blue: #2563eb;
+            --bg-color: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at top right, #e0e7ff, transparent 400px), 
+                              radial-gradient(circle at bottom left, #dbeafe, transparent 400px);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding-bottom: 30px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Header / Kop Sekolah (PDF Ready) */
+        #kop-header {
+            background-color: var(--primary-navy);
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .logo-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: white;
+            border: 2px solid white;
+        }
+
+        .kop-text {
+            text-align: center;
+            flex: 1;
+            padding: 0 10px;
+        }
+
+        .kop-text h2 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+        .kop-text h3 { font-size: 12px; font-weight: 500; color: #93c5fd; }
+        .kop-text p { font-size: 10px; color: #cbd5e1; }
+
+        /* Container Main */
+        .container {
+            padding: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Glass Card Effect */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary-navy);
+        }
+
+        .step-desc {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 20px;
+        }
+
+        /* Form Inputs */
+        .form-group { margin-bottom: 15px; }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 14px;
+            background-color: white;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        select.form-control { appearance: none; }
+
+        /* Custom File Upload UI */
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            background-color: #f8fafc;
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        .upload-area:active { border-color: var(--primary-blue); }
+        .upload-area i { font-size: 24px; color: var(--primary-blue); margin-bottom: 5px; }
+        .upload-area p { font-size: 12px; color: var(--text-light); margin: 0; }
+        .upload-area img {
+            max-height: 80px;
+            border-radius: 8px;
+            display: none;
+            margin: 10px auto 0;
+        }
+        
+        .file-input {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            width: 100%;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+            transition: transform 0.1s, background-color 0.3s;
+        }
+        .btn-primary:active { transform: scale(0.98); }
+
+        /* Tap to Move System */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            background-color: white;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .file-item i { margin-right: 10px; font-size: 16px; color: var(--text-light); }
+        
+        /* Selected state */
+        .file-item.selected {
+            background-color: #eff6ff;
+            border-color: var(--primary-blue);
+            transform: scale(1.02);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+        }
+
+        .folder-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .folder-box {
+            background-color: #f1f5f9;
+            border: 2px dashed #94a3b8;
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            min-height: 90px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .folder-box:active { background-color: #e2e8f0; }
+        
+        .folder-box i { font-size: 24px; color: var(--warning); margin-bottom: 5px; }
+        .folder-box.highlight {
+            border-color: var(--primary-blue);
+            background-color: #eff6ff;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+
+        .folder-name { font-size: 11px; font-weight: 600; color: var(--text-dark); word-break: break-word;}
+        .folder-content {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .folder-content .file-item {
+            padding: 6px 8px;
+            font-size: 11px;
+            border-radius: 6px;
+            border: none;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .folder-content .file-item i { font-size: 12px; }
+
+        /* Quiz Styles */
+        .quiz-card { margin-bottom: 20px; }
+        .quiz-question { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+        .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+        .quiz-option {
+            display: flex; align-items: center; padding: 12px;
+            background: white; border: 1px solid #cbd5e1; border-radius: 10px;
+            font-size: 13px; cursor: pointer; transition: 0.2s;
+        }
+        .quiz-option input[type="radio"] { margin-right: 10px; accent-color: var(--primary-blue); }
+        .quiz-option.selected { border-color: var(--primary-blue); background-color: #eff6ff; }
+
+        /* Score Card / Result PDF Area */
+        #pdf-content { padding-bottom: 20px; background-color: white;}
+        .score-card {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+        }
+
+        .student-pic {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            margin-right: 15px;
+            background-color: #cbd5e1;
+        }
+
+        .student-info { flex: 1; }
+        .student-info h3 { font-size: 16px; margin-bottom: 2px; }
+        .student-info p { font-size: 12px; color: #94a3b8; }
+
+        .score-circle {
+            width: 65px; height: 65px;
+            border-radius: 50%;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--primary-navy);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        .score-circle span { font-size: 24px; font-weight: 700; line-height: 1; }
+        .score-circle small { font-size: 8px; font-weight: 600; color: var(--text-light); }
+
+        .eval-section-title {
+            font-size: 14px; font-weight: 700;
+            color: var(--primary-navy); margin: 20px 0 10px;
+            border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;
+        }
+
+        .eval-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;
+            font-size: 12px; font-weight: 500;
+        }
+        
+        .eval-correct { background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+        .eval-incorrect { background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        
+        .eval-item i { margin-right: 8px; }
+
+        /* Floating Alert */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 10px 20px;
+            border-radius: 30px; font-size: 13px; z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: opacity 0.3s, transform 0.3s;
+            opacity: 0; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+
+    </style>
+</head>
+<body>
+
+    <div class="toast" id="toastMessage">Pesan informasi</div>
+
+    <!-- Area Export PDF -->
+    <div id="pdf-container">
+        <!-- HEADER KOP (Akan Tampil Setelah Step 1) -->
+        <header id="kop-header" class="hidden">
+            <img src="" alt="Logo Sekolah" class="logo-img" id="img-logo1" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjY2JkNWUxIi8+PC9zdmc+'">
+            <div class="kop-text">
+                <h2>SMKN 1 TASIKMALAYA</h2>
+                <h3>Program Keahlian<br>Broadcasting dan Film</h3>
+                <p>Tahun Pelajaran 2026/2027</p>
+            </div>
+            <img src="" alt="Logo Jurusan" class="logo-img" id="img-logo2" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjY2JkNWUxIi8+PC9zdmc+'">
+        </header>
+
+        <!-- CONTAINER KONTEN -->
+        <div class="container" id="main-container">
+            
+            <!-- STEP 1: IDENTITAS & UPLOAD -->
+            <div id="step-1" class="glass-card">
+                <h2 class="step-title">Langkah 1: Identitas & Persiapan</h2>
+                <p class="step-desc">Isi data diri dan unggah atribut yang diperlukan.</p>
+
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" id="inputNama" class="form-control" placeholder="Masukkan nama lengkap...">
+                </div>
+
+                <div class="form-group">
+                    <label>Kelas</label>
+                    <select id="inputKelas" class="form-control">
+                        <option value="" disabled selected>-- Pilih Kelas --</option>
+                        <option value="X-BDF 1">X-BDF 1</option>
+                        <option value="X-BDF 2">X-BDF 2</option>
+                        <option value="XI-PF 1">XI-PF 1</option>
+                        <option value="XI-PF 2">XI-PF 2</option>
+                        <option value="XII-PF 1">XII-PF 1</option>
+                        <option value="XII-PF 2">XII-PF 2</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Unggah Logo SMKN 1</label>
+                    <div class="upload-area">
+                        <input type="file" id="fileLogo1" accept="image/*" class="file-input" onchange="handleImageUpload(event, 'previewLogo1', 'base64Logo1')">
+                        <i class="fas fa-university"></i>
+                        <p>Ketuk untuk unggah Logo SMKN 1</p>
+                        <img id="previewLogo1" src="">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Unggah Logo BDF/PF</label>
+                    <div class="upload-area">
+                        <input type="file" id="fileLogo2" accept="image/*" class="file-input" onchange="handleImageUpload(event, 'previewLogo2', 'base64Logo2')">
+                        <i class="fas fa-film"></i>
+                        <p>Ketuk untuk unggah Logo Jurusan</p>
+                        <img id="previewLogo2" src="">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Unggah Foto Profil</label>
+                    <div class="upload-area">
+                        <input type="file" id="fileFoto" accept="image/*" class="file-input" onchange="handleImageUpload(event, 'previewFoto', 'base64Foto')">
+                        <i class="fas fa-user-circle"></i>
+                        <p>Ketuk untuk unggah Foto Profil Anda</p>
+                        <img id="previewFoto" src="">
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="goToStep2()">Mulai Simulasi <i class="fas fa-arrow-right"></i></button>
+            </div>
+
+            <!-- STEP 2: PRAKTIK ORGANISASI FILE -->
+            <div id="step-2" class="hidden">
+                <div class="glass-card">
+                    <h2 class="step-title">Langkah 2: Praktik Folder</h2>
+                    <p class="step-desc"><strong>Cara bermain:</strong> Ketuk nama file yang ada di daftar acak, lalu ketuk folder tujuan untuk memindahkannya.</p>
+                    
+                    <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; font-size:11px; margin-bottom:15px; border: 1px solid #ffeeba;">
+                        <i class="fas fa-info-circle"></i> Sisa File Acak: <strong id="file-count">8</strong>
+                    </div>
+
+                    <div class="item-list" id="unsorted-files">
+                        <!-- File Acak Akan di Render via JS -->
+                    </div>
+
+                    <div class="folder-grid" id="folder-grid">
+                        <!-- Folder Akan di Render via JS -->
+                    </div>
+                    
+                    <button class="btn-primary" id="btnSelesaiPraktik" style="margin-top: 20px; display: none;" onclick="goToStep3()">Lanjut Evaluasi Teori <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 3: EVALUASI TEORI -->
+            <div id="step-3" class="hidden">
+                <div class="glass-card">
+                    <h2 class="step-title">Langkah 3: Evaluasi Teori</h2>
+                    <p class="step-desc">Jawablah 5 pertanyaan berikut dengan tepat.</p>
+                    
+                    <div id="quiz-container">
+                        <!-- Kuis di Render via JS -->
+                    </div>
+
+                    <button class="btn-primary" onclick="finishAll()">Kirim Jawaban & Lihat Hasil <i class="fas fa-check-circle"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 4: HASIL (PDF READY AREA) -->
+            <div id="step-4" class="hidden">
+                <div class="glass-card" style="padding:0; border:none; background:transparent; box-shadow:none;">
+                    
+                    <div class="score-card">
+                        <img src="" id="result-photo" class="student-pic">
+                        <div class="student-info">
+                            <h3 id="result-name">Nama Siswa</h3>
+                            <p id="result-class">Kelas</p>
+                        </div>
+                        <div class="score-circle">
+                            <span id="final-score">0</span>
+                            <small>NILAI AKHIR</small>
+                        </div>
+                    </div>
+
+                    <!-- Laporan Praktik -->
+                    <h4 class="eval-section-title">Nilai Praktik (Maks 50) : <span id="score-praktik" style="color:var(--primary-blue);">0</span></h4>
+                    <div id="report-praktik" style="margin-bottom: 20px;"></div>
+
+                    <!-- Laporan Teori -->
+                    <h4 class="eval-section-title">Nilai Teori (Maks 50) : <span id="score-teori" style="color:var(--primary-blue);">0</span></h4>
+                    <div id="report-teori"></div>
+
+                </div>
+            </div>
+
+        </div> <!-- End Main Container -->
+    </div> <!-- End PDF Container -->
+
+    <!-- Tombol Aksi Akhir (Tidak masuk PDF) -->
+    <div class="container hidden" id="action-buttons" style="margin-top:-10px;">
+        <button class="btn-primary" style="background-color: var(--success); margin-bottom: 10px;" onclick="exportToPDF()">
+            <i class="fas fa-file-pdf"></i> Unduh Laporan PDF
+        </button>
+        <button class="btn-primary" style="background-color: var(--text-light);" onclick="location.reload()">
+            <i class="fas fa-redo"></i> Ulangi Simulasi
+        </button>
+    </div>
+
+    <!-- Data Base64 Penyimpanan Sementara -->
+    <input type="hidden" id="base64Logo1">
+    <input type="hidden" id="base64Logo2">
+    <input type="hidden" id="base64Foto">
+
+    <script>
+        // --- DATA STATE ---
+        let student = { nama: "", kelas: "" };
+        let selectedFileId = null;
+        let scorePraktik = 0;
+        let scoreTeori = 0;
+
+        // --- DATA FILE & FOLDER ---
+        const filesData = [
+            { id: 1, name: "VLOG_Cam_01.MP4", icon: "fa-file-video", correct: "folder2", current: "unsorted" },
+            { id: 2, name: "B_Roll_Kota.MOV", icon: "fa-file-video", correct: "folder2", current: "unsorted" },
+            { id: 3, name: "VO_Narasi_01.wav", icon: "fa-file-audio", correct: "folder3", current: "unsorted" },
+            { id: 4, name: "Backsound_Chill.mp3", icon: "fa-file-audio", correct: "folder3", current: "unsorted" },
+            { id: 5, name: "Logo_Sekolah.png", icon: "fa-file-image", correct: "folder4", current: "unsorted" },
+            { id: 6, name: "Skrip_Final.pdf", icon: "fa-file-pdf", correct: "folder4", current: "unsorted" },
+            { id: 7, name: "Tugas_Akhir.prproj", icon: "fa-file-code", correct: "folder1", current: "unsorted" },
+            { id: 8, name: "Autosave_01.prproj", icon: "fa-file-code", correct: "folder1", current: "unsorted" }
+        ];
+
+        const foldersData = [
+            { id: "folder1", name: "01_Project_Files" },
+            { id: "folder2", name: "02_Video_Footage" },
+            { id: "folder3", name: "03_Audio_Music" },
+            { id: "folder4", name: "04_Graphics_Docs" }
+        ];
+
+        // --- DATA KUIS ---
+        const quizData = [
+            {
+                q: "Mengapa penting membuat folder yang terstruktur sebelum mulai mengedit video?",
+                options: [
+                    "A. Agar aplikasi edit video tidak error.",
+                    "B. Memudahkan pencarian aset dan mencegah media offline.",
+                    "C. Untuk mengurangi ukuran file video.",
+                    "D. Agar proses render menjadi lebih cepat."
+                ],
+                correctIndex: 1
+            },
+            {
+                q: "Di folder mana sebaiknya Anda menyimpan file efek suara (Sound Effect)?",
+                options: [
+                    "A. 01_Project_Files",
+                    "B. 02_Video_Footage",
+                    "C. 03_Audio_Music",
+                    "D. 04_Graphics_Docs"
+                ],
+                correctIndex: 2
+            },
+            {
+                q: "Jika Premiere Pro menampilkan layar merah 'Media Offline', apa penyebab umumnya?",
+                options: [
+                    "A. Komputer tidak terkoneksi internet.",
+                    "B. File mentah dipindahkan/diubah namanya setelah di-import.",
+                    "C. Format video tidak didukung.",
+                    "D. Ruang penyimpanan hardisk penuh."
+                ],
+                correctIndex: 1
+            },
+            {
+                q: "Apa yang dimaksud dengan 'Project File' (misal: .prproj)?",
+                options: [
+                    "A. File video hasil akhir yang siap ditonton.",
+                    "B. File aset mentah langsung dari kamera.",
+                    "C. File data instruksi editan, tidak menyimpan video utuh di dalamnya.",
+                    "D. File khusus untuk narasi audio."
+                ],
+                correctIndex: 2
+            },
+            {
+                q: "Contoh penamaan file yang baik dan terstandar adalah...",
+                options: [
+                    "A. Video_Terbaru_Banget_Sekali.mp4",
+                    "B. 20261013_TugasIklan_Cam1_V01.mp4",
+                    "C. adfadfadf.mp4",
+                    "D. Final_Final_Fix_Beneran_Final.mp4"
+                ],
+                correctIndex: 1
+            }
+        ];
+        
+        let quizAnswers = new Array(quizData.length).fill(null);
+
+        // --- FUNGSI UTILITIES ---
+        function showToast(msg) {
+            const toast = document.getElementById("toastMessage");
+            toast.innerText = msg;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2500);
+        }
+
+        // --- FUNGSI UPLOAD GAMBAR KE BASE64 ---
+        function handleImageUpload(event, previewId, hiddenInputId) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Data = e.target.result;
+                    // Tampilkan preview
+                    const imgPreview = document.getElementById(previewId);
+                    imgPreview.src = base64Data;
+                    imgPreview.style.display = 'block';
+                    // Sembunyikan icon & text bawaan
+                    event.target.nextElementSibling.style.display = 'none';
+                    event.target.nextElementSibling.nextElementSibling.style.display = 'none';
+                    // Simpan data Base64 di input hidden
+                    document.getElementById(hiddenInputId).value = base64Data;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- STEP 1 to STEP 2 ---
+        function goToStep2() {
+            const nama = document.getElementById("inputNama").value.trim();
+            const kelas = document.getElementById("inputKelas").value;
+            const logo1 = document.getElementById("base64Logo1").value;
+            const logo2 = document.getElementById("base64Logo2").value;
+            const foto = document.getElementById("base64Foto").value;
+
+            if (!nama || !kelas || !logo1 || !logo2 || !foto) {
+                showToast("Mohon isi semua data dan unggah ke-3 gambar!");
+                return;
+            }
+
+            student.nama = nama;
+            student.kelas = kelas;
+
+            // Set Header Kop Images
+            document.getElementById("img-logo1").src = logo1;
+            document.getElementById("img-logo2").src = logo2;
+            
+            // Set Result Profile Picture
+            document.getElementById("result-photo").src = foto;
+
+            // Toggle UI
+            document.getElementById("step-1").classList.add("hidden");
+            document.getElementById("kop-header").classList.remove("hidden");
+            document.getElementById("step-2").classList.remove("hidden");
+
+            renderPraktikUI();
+        }
+
+        // --- RENDER & LOGIC PRAKTIK ---
+        function renderPraktikUI() {
+            const unsortedContainer = document.getElementById("unsorted-files");
+            const folderContainer = document.getElementById("folder-grid");
+            
+            unsortedContainer.innerHTML = "";
+            folderContainer.innerHTML = "";
+
+            let unsortedCount = 0;
+
+            // Render Unsorted Files
+            filesData.forEach(file => {
+                if (file.current === "unsorted") {
+                    unsortedCount++;
+                    const isSelected = selectedFileId === file.id ? "selected" : "";
+                    unsortedContainer.innerHTML += `
+                        <div class="file-item ${isSelected}" onclick="selectFile(${file.id})">
+                            <i class="fas ${file.icon}"></i> ${file.name}
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById("file-count").innerText = unsortedCount;
+
+            // Render Folders
+            foldersData.forEach(folder => {
+                // Ambil file yang ada di dalam folder ini
+                const folderFiles = filesData.filter(f => f.current === folder.id);
+                let filesHTML = "";
+                folderFiles.forEach(f => {
+                    filesHTML += `<div class="file-item"><i class="fas ${f.icon}"></i> ${f.name}</div>`;
+                });
+
+                const highlight = selectedFileId ? "highlight" : "";
+
+                folderContainer.innerHTML += `
+                    <div class="folder-box ${highlight}" onclick="moveToFolder('${folder.id}')">
+                        <i class="fas fa-folder-open"></i>
+                        <div class="folder-name">${folder.name}</div>
+                        <div class="folder-content">${filesHTML}</div>
+                    </div>
+                `;
+            });
+
+            // Tampilkan tombol lanjut jika semua file sudah dipindah
+            if (unsortedCount === 0) {
+                document.getElementById("btnSelesaiPraktik").style.display = "block";
+            }
+        }
+
+        function selectFile(id) {
+            selectedFileId = id;
+            renderPraktikUI();
+            showToast("Ketuk folder tujuan di bawah.");
+        }
+
+        function moveToFolder(folderId) {
+            if (selectedFileId !== null) {
+                const fileIndex = filesData.findIndex(f => f.id === selectedFileId);
+                if (fileIndex !== -1) {
+                    filesData[fileIndex].current = folderId;
+                    selectedFileId = null; // Reset selection
+                    renderPraktikUI();
+                }
+            } else {
+                showToast("Pilih file terlebih dahulu di bagian atas!");
+            }
+        }
+
+        // --- STEP 2 to STEP 3 ---
+        function goToStep3() {
+            document.getElementById("step-2").classList.add("hidden");
+            document.getElementById("step-3").classList.remove("hidden");
+            renderQuizUI();
+        }
+
+        // --- LOGIC KUIS ---
+        function renderQuizUI() {
+            const container = document.getElementById("quiz-container");
+            container.innerHTML = "";
+
+            quizData.forEach((q, qIndex) => {
+                let optionsHTML = "";
+                q.options.forEach((opt, oIndex) => {
+                    const isSelected = quizAnswers[qIndex] === oIndex ? "checked" : "";
+                    const selectedClass = quizAnswers[qIndex] === oIndex ? "selected" : "";
+                    
+                    optionsHTML += `
+                        <label class="quiz-option ${selectedClass}">
+                            <input type="radio" name="q${qIndex}" value="${oIndex}" ${isSelected} onchange="answerQuiz(${qIndex}, ${oIndex})">
+                            ${opt}
+                        </label>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="quiz-card">
+                        <div class="quiz-question">${qIndex + 1}. ${q.q}</div>
+                        <div class="quiz-options">${optionsHTML}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function answerQuiz(qIndex, oIndex) {
+            quizAnswers[qIndex] = oIndex;
+            renderQuizUI();
+        }
+
+        // --- FINISH & GENERATE REPORT ---
+        function finishAll() {
+            // Validasi kuis
+            if (quizAnswers.includes(null)) {
+                showToast("Mohon jawab semua pertanyaan teori!");
+                return;
+            }
+
+            // Hitung Nilai Praktik (8 File x 6.25 = 50)
+            let benarPraktik = 0;
+            let reportPraktikHTML = "";
+            filesData.forEach(file => {
+                const isCorrect = file.current === file.correct;
+                if (isCorrect) benarPraktik++;
+                
+                const cssClass = isCorrect ? "eval-correct" : "eval-incorrect";
+                const icon = isCorrect ? "fa-check-circle" : "fa-times-circle";
+                const targetFolderName = foldersData.find(f => f.id === file.current)?.name || "Unsorted";
+
+                reportPraktikHTML += `
+                    <div class="eval-item ${cssClass}">
+                        <span><i class="fas ${icon}"></i> ${file.name}</span>
+                        <span><i class="fas fa-folder"></i> ${targetFolderName}</span>
+                    </div>
+                `;
+            });
+            scorePraktik = Math.round((benarPraktik / filesData.length) * 50);
+
+            // Hitung Nilai Teori (5 Soal x 10 = 50)
+            let benarTeori = 0;
+            let reportTeoriHTML = "";
+            quizData.forEach((q, index) => {
+                const isCorrect = quizAnswers[index] === q.correctIndex;
+                if (isCorrect) benarTeori++;
+
+                const cssClass = isCorrect ? "eval-correct" : "eval-incorrect";
+                const icon = isCorrect ? "fa-check-circle" : "fa-times-circle";
+                
+                reportTeoriHTML += `
+                    <div class="eval-item ${cssClass}">
+                        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:80%;">
+                            <i class="fas ${icon}"></i> Soal ${index + 1}: ${q.q}
+                        </span>
+                    </div>
+                `;
+            });
+            scoreTeori = Math.round((benarTeori / quizData.length) * 50);
+
+            const totalScore = scorePraktik + scoreTeori;
+
+            // Update UI Result
+            document.getElementById("result-name").innerText = student.nama;
+            document.getElementById("result-class").innerText = student.kelas;
+            document.getElementById("final-score").innerText = totalScore;
+            
+            document.getElementById("score-praktik").innerText = scorePraktik;
+            document.getElementById("report-praktik").innerHTML = reportPraktikHTML;
+            
+            document.getElementById("score-teori").innerText = scoreTeori;
+            document.getElementById("report-teori").innerHTML = reportTeoriHTML;
+
+            // Switch Screen
+            document.getElementById("step-3").classList.add("hidden");
+            document.getElementById("step-4").classList.remove("hidden");
+            document.getElementById("action-buttons").classList.remove("hidden");
+            
+            showToast("Tugas Selesai!");
+            
+            // Sedikit style khusus untuk container pdf agar background putih bersih
+            document.getElementById("main-container").style.backgroundColor = "white";
+            document.getElementById("main-container").style.borderRadius = "0 0 10px 10px";
+        }
+
+        // --- EXPORT TO PDF ---
+        function exportToPDF() {
+            showToast("Sedang menyiapkan PDF... Harap tunggu.");
+            const element = document.getElementById('pdf-container');
+            const opt = {
+                margin:       [0, 0, 0, 0], // Margin dihilangkan agar header nempel pinggir
+                filename:     `OrganisasiFile_${student.kelas.replace(/[^a-zA-Z0-9]/g, '')}_${student.nama.replace(/\s+/g, '')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Tambahkan padding sementara untuk export agar rapi
+            element.style.padding = "20px";
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.padding = "0px"; // kembalikan padding
+                showToast("PDF Berhasil Diunduh!");
+            });
+        }
+
+        // Listener event untuk efek radio button custom
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'radio') {
+                const radios = document.querySelectorAll(`input[name="${e.target.name}"]`);
+                radios.forEach(r => r.closest('.quiz-option').classList.remove('selected'));
+                if (e.target.checked) {
+                    e.target.closest('.quiz-option').classList.add('selected');
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
