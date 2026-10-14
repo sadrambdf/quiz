@@ -1,0 +1,680 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Proyek Perencanaan Alat Produksi - BDF</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 100% 0%, hsla(217,39%,20%,1) 0, transparent 40%), 
+                radial-gradient(at 0% 100%, hsla(253,39%,15%,1) 0, transparent 40%);
+            color: #f1f5f9;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* Checkbox Custom Style */
+        .gear-checkbox:checked + label {
+            background-color: #3b82f6; /* Blue-500 */
+            border-color: #60a5fa;
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .gear-checkbox:checked + label .icon-box {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .page-enter {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar styling for textareas */
+        textarea::-webkit-scrollbar { width: 6px; }
+        textarea::-webkit-scrollbar-track { background: transparent; }
+        textarea::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+
+        /* Print Settings for PDF */
+        @media print {
+            body * { visibility: hidden; }
+            #app-container { max-width: 100% !important; padding: 0 !important; }
+            #pdf-content, #pdf-content * { visibility: visible; }
+            #pdf-content { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; border: none !important; }
+            .no-print { display: none !important; }
+        }
+        #pdf-content { background-color: white; color: #0f172a; }
+        .print-only { display: none; }
+        .html2pdf__container .no-print { display: none !important; }
+        .html2pdf__container .print-only { display: block !important; }
+        
+        .tab-btn.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="pb-24 pt-4 md:pt-8 px-4">
+
+    <div class="max-w-2xl mx-auto w-full relative z-10" id="app-container">
+
+        <!-- HEADER APLIKASI -->
+        <header id="main-header" class="text-center mb-6 page-enter">
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 uppercase">
+                Production Gear
+            </h1>
+            <h2 class="text-xs md:text-sm font-semibold text-blue-300 mt-1 uppercase tracking-widest">Simulator & Proposal Alat AV</h2>
+            <div class="mt-4 inline-flex items-center gap-2 bg-slate-800/80 px-4 py-1.5 rounded-full border border-slate-700">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[10px] font-bold text-slate-300 tracking-wider">SMKN 1 TASIKMALAYA - BDF</span>
+            </div>
+        </header>
+
+        <!-- STEP 1: IDENTITAS & SKENARIO -->
+        <section id="step-1" class="glass-panel p-5 md:p-8 rounded-3xl page-enter">
+            <div class="mb-6 border-b border-slate-700 pb-4">
+                <span class="bg-indigo-500/20 text-indigo-300 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">Tahap 1 / 4</span>
+                <h3 class="text-xl font-bold text-white mt-3">Identitas & Pemilihan Kasus</h3>
+                <p class="text-xs text-slate-400 mt-1">Isi identitas kelompok/individu, unggah foto, dan pilih studi kasus produksi Anda.</p>
+            </div>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-2 uppercase tracking-wide">Nama Siswa / Kelompok</label>
+                    <textarea id="input-team" rows="2" class="w-full bg-slate-900/50 border border-slate-600 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" placeholder="Contoh: Kelompok 1 (Budi, Siti, Andi) atau Nama Individu"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-2 uppercase tracking-wide">Kelas</label>
+                    <select id="input-class" class="w-full bg-slate-900/50 border border-slate-600 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none">
+                        <option value="" disabled selected>-- Pilih Kelas --</option>
+                        <option value="X-BDF 1">X-BDF 1</option>
+                        <option value="X-BDF 2">X-BDF 2</option>
+                        <option value="XI-PF 1">XI-PF 1</option>
+                        <option value="XI-PF 2">XI-PF 2</option>
+                        <option value="XII-PF 1">XII-PF 1</option>
+                        <option value="XII-PF 2">XII-PF 2</option>
+                    </select>
+                </div>
+
+                <!-- TAMBAHAN: UNGGAH FOTO -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-2 uppercase tracking-wide">Unggah Foto Profil / Tim</label>
+                    <label for="input-photo" class="flex items-center gap-3 bg-slate-900/50 border border-slate-600 border-dashed p-3 rounded-xl cursor-pointer hover:bg-slate-800/50 transition active:scale-[0.98]">
+                        <div class="w-12 h-12 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center overflow-hidden shrink-0 shadow-inner" id="photo-preview">
+                            <svg class="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-blue-400" id="photo-label">Pilih File Foto</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Wajib diisi (Maksimal 2MB)</p>
+                        </div>
+                        <input type="file" id="input-photo" accept="image/*" class="hidden">
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-2 uppercase tracking-wide">Pilih Skenario Produksi</label>
+                    <div class="space-y-3">
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:bg-slate-700/50 transition">
+                            <input type="radio" name="scenario" value="Skenario A: Liputan Dokumenter Alam (Outdoor, Cahaya Matahari, Banyak Angin)" class="mt-1 w-4 h-4 accent-blue-500">
+                            <div>
+                                <p class="text-sm font-bold text-white">A. Dokumenter Alam (Outdoor)</p>
+                                <p class="text-[10px] text-slate-400 leading-snug mt-0.5">Medan sulit, butuh alat ringkas, cahaya matahari terik, dan gangguan suara angin kencang.</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:bg-slate-700/50 transition">
+                            <input type="radio" name="scenario" value="Skenario B: Film Pendek Drama (Indoor Studio, Cahaya Buatan, Kedap Suara)" class="mt-1 w-4 h-4 accent-blue-500">
+                            <div>
+                                <p class="text-sm font-bold text-white">B. Film Pendek Drama (Indoor)</p>
+                                <p class="text-[10px] text-slate-400 leading-snug mt-0.5">Syuting di ruangan tertutup. Butuh kualitas sinematik, lampu yang bisa diatur, dan suara jernih.</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:bg-slate-700/50 transition">
+                            <input type="radio" name="scenario" value="Skenario C: Podcast / Talkshow (Indoor, Multi-Kamera, Multi-Mic)" class="mt-1 w-4 h-4 accent-blue-500">
+                            <div>
+                                <p class="text-sm font-bold text-white">C. Podcast / Talkshow</p>
+                                <p class="text-[10px] text-slate-400 leading-snug mt-0.5">Terdapat 3 pembicara yang duduk diam. Butuh rekaman durasi panjang dan audio masing-masing orang.</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:bg-slate-700/50 transition">
+                            <input type="radio" name="scenario" value="Skenario D: Liputan Event Konser Musik (Malam Hari, Cahaya Minim, Suara Bising)" class="mt-1 w-4 h-4 accent-blue-500">
+                            <div>
+                                <p class="text-sm font-bold text-white">D. Event Konser (Night/Low Light)</p>
+                                <p class="text-[10px] text-slate-400 leading-snug mt-0.5">Kondisi gelap (low light), banyak pergerakan cepat, dan suara lingkungan sangat bising.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="goToStep2()" class="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-blue-500/20 active:scale-95 text-sm uppercase tracking-wider">
+                    Lanjut Ke Gudang Alat
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 2: PEMILIHAN ALAT (GUDANG VIRTUAL) -->
+        <section id="step-2" class="hidden glass-panel p-5 md:p-8 rounded-3xl page-enter">
+            <div class="mb-4 border-b border-slate-700 pb-4">
+                <span class="bg-blue-500/20 text-blue-300 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">Tahap 2 / 4</span>
+                <h3 class="text-xl font-bold text-white mt-3">Kitting Alat Produksi</h3>
+                <p class="text-xs text-slate-400 mt-1">Pilih peralatan yang sesuai dengan skenario: <span id="display-scenario" class="text-blue-300 font-semibold"></span></p>
+            </div>
+
+            <!-- Tab Navigasi Kategori -->
+            <div class="flex overflow-x-auto gap-2 mb-4 pb-2 hide-scrollbar">
+                <button onclick="switchTab('cam')" id="tab-cam" class="tab-btn active shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs font-bold text-slate-300 transition">Kamera & Lensa</button>
+                <button onclick="switchTab('audio')" id="tab-audio" class="tab-btn shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs font-bold text-slate-300 transition">Tata Suara</button>
+                <button onclick="switchTab('light')" id="tab-light" class="tab-btn shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs font-bold text-slate-300 transition">Tata Cahaya</button>
+                <button onclick="switchTab('grip')" id="tab-grip" class="tab-btn shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs font-bold text-slate-300 transition">Support / Grip</button>
+            </div>
+
+            <!-- Kontainer Alat (Dibuat via JS) -->
+            <div id="equipment-container" class="space-y-3 min-h-[300px] max-h-[50vh] overflow-y-auto pr-2">
+                <!-- Items dirender disini -->
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between items-center">
+                <p class="text-xs text-slate-400 font-semibold"><span id="item-count" class="text-white text-lg">0</span> Alat dipilih</p>
+                <button onclick="goToStep3()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-emerald-500/20 active:scale-95 text-sm">
+                    Lanjut Analisis
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 3: JUSTIFIKASI / ARGUMENTASI -->
+        <section id="step-3" class="hidden glass-panel p-5 md:p-8 rounded-3xl page-enter">
+            <div class="mb-6 border-b border-slate-700 pb-4">
+                <span class="bg-amber-500/20 text-amber-300 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">Tahap 3 / 4</span>
+                <h3 class="text-xl font-bold text-white mt-3">Analisis & Argumentasi</h3>
+                <p class="text-xs text-slate-400 mt-1">Sebagai Manager Produksi, jelaskan secara singkat mengapa kelompok Anda memilih susunan alat di bawah ini berdasarkan skenario yang dipilih.</p>
+            </div>
+
+            <div id="justification-container" class="space-y-6">
+                <!-- Textarea untuk setiap kategori yang dipilih dirender disini -->
+            </div>
+
+            <button onclick="goToStep4()" class="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-blue-500/20 active:scale-95 text-sm uppercase tracking-wider">
+                Simpan & Buat Proposal
+            </button>
+        </section>
+
+        <!-- STEP 4: HASIL (PDF READY) -->
+        <section id="step-4" class="hidden page-enter">
+            
+            <div id="pdf-content" class="rounded-xl overflow-hidden shadow-2xl relative bg-white text-slate-900">
+                
+                <!-- HEADER LAPORAN PDF -->
+                <div class="bg-slate-900 text-white p-6 md:p-10 border-b-8 border-blue-600 relative overflow-hidden">
+                    <!-- Elemen dekorasi -->
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-[80px] opacity-20 -mr-20 -mt-20"></div>
+                    
+                    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div class="text-center md:text-left">
+                            <h1 class="text-2xl md:text-3xl font-black uppercase tracking-wider text-white">SMKN 1 Tasikmalaya</h1>
+                            <h2 class="text-sm md:text-base font-bold text-blue-400 mt-1">Program Keahlian Broadcasting dan Film</h2>
+                            <p class="text-[10px] md:text-xs text-slate-400 mt-2">Lembar Pengesahan Pra-Produksi | T.A 2026/2027</p>
+                        </div>
+                        <div class="border-2 border-slate-700 bg-slate-800/50 rounded-xl p-4 text-center min-w-[150px]">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dokumen</p>
+                            <p class="text-sm font-black text-white">Proposal Alat</p>
+                            <p class="text-xs font-bold text-blue-400">Audio Video</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KONTEN LAPORAN -->
+                <div class="p-6 md:p-10 bg-white min-h-[500px]">
+                    
+                    <!-- Info Tim & Skenario -->
+                    <div class="mb-8 p-5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col md:flex-row gap-5 md:items-center">
+                        <div class="flex items-center gap-4 flex-[1.2]">
+                            <img id="res-photo" src="" alt="Foto" class="w-16 h-16 object-cover rounded-full border-2 border-white shadow-md bg-slate-200 shrink-0 hidden">
+                            <div id="res-photo-placeholder" class="w-16 h-16 rounded-full bg-slate-200 border-2 border-white shadow-md flex items-center justify-center shrink-0">
+                                <svg class="w-8 h-8 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nama / Anggota Kelompok</p>
+                                <p class="text-sm font-bold text-slate-800 mt-1 leading-snug" id="res-team">-</p>
+                                <p class="text-xs font-semibold text-blue-600 mt-1" id="res-class">-</p>
+                            </div>
+                        </div>
+                        <div class="md:border-l md:border-slate-200 md:pl-5 flex-[1.5] border-t border-slate-200 pt-5 md:border-t-0 md:pt-0">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Skenario Terpilih</p>
+                            <p class="text-sm font-bold text-slate-800 mt-1 leading-snug" id="res-scenario">-</p>
+                        </div>
+                    </div>
+
+                    <!-- List Alat & Justifikasi -->
+                    <div id="res-equipment-list" class="space-y-6">
+                        <!-- Konten laporan di-generate via JS -->
+                    </div>
+
+                    <!-- Tanda Tangan -->
+                    <div class="mt-16 flex justify-between items-end print-only:flex">
+                        <div class="text-center w-40">
+                            <p class="text-xs text-slate-500 mb-16">Disusun Oleh,</p>
+                            <div class="border-b border-slate-400 pb-1">
+                                <p class="text-xs font-bold text-slate-800">Perwakilan Kelompok</p>
+                            </div>
+                        </div>
+                        <div class="text-center w-40">
+                            <p class="text-xs text-slate-500 mb-16">Diperiksa Oleh,</p>
+                            <div class="border-b border-slate-400 pb-1">
+                                <p class="text-xs font-bold text-slate-800">Guru Mata Pelajaran</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Bawah (Diperbarui dengan opsi Fallback) -->
+            <div class="mt-6 flex flex-col md:flex-row gap-3 no-print w-full">
+                <button onclick="exportToPDF()" id="btn-export" class="flex-[2] py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition text-sm flex items-center justify-center gap-2 active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                    Bagikan / Simpan PDF ke HP
+                </button>
+                <button onclick="location.reload()" class="flex-1 py-4 bg-slate-800 border border-slate-700 text-white font-bold rounded-xl text-sm transition active:scale-95">
+                    Ulangi
+                </button>
+            </div>
+            
+            <!-- PESAN PERINGATAN JIKA DOWNLOAD DIBLOKIR SISTEM HP -->
+            <div id="download-warning" class="hidden mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center no-print pb-8">
+                <p class="text-xs text-red-400 font-bold mb-1">File tidak ada di folder Unduhan?</p>
+                <p class="text-[10px] text-slate-400 mb-4 leading-relaxed">HP Anda sedang menggunakan "HTML Viewer" yang otomatis memblokir fitur unduhan. Silakan buka file ini menggunakan aplikasi <strong class="text-slate-200">Google Chrome</strong>, atau gunakan fitur Cetak Sistem di bawah ini lalu pilih <strong class="text-slate-200">"Simpan sebagai PDF" (Save as PDF)</strong>.</p>
+                <button onclick="window.print()" class="w-full py-3 bg-red-600 text-white font-bold rounded-xl text-xs shadow-lg shadow-red-600/30 active:scale-95 transition flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Gunakan Cetak Sistem (Simpan PDF)
+                </button>
+            </div>
+            
+            <p class="text-[11px] text-slate-400 text-center no-print mt-4 pb-8">*Tekan tombol hijau di atas. HP Anda akan otomatis memunculkan menu untuk langsung mengirim PDF ke WhatsApp, atau menyimpannya ke memori HP / Google Drive.</p>
+        </section>
+
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 -translate-y-[150%] bg-slate-800 border border-slate-700 p-3 rounded-2xl shadow-2xl transition-all duration-300 z-[100] flex items-center gap-3 w-11/12 max-w-sm opacity-0 pointer-events-none">
+        <div class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 text-lg font-bold">!</div>
+        <p class="text-xs font-medium text-slate-200 leading-snug flex-1" id="toast-msg">Pesan</p>
+    </div>
+
+    <script>
+        // --- DATA PERALATAN ---
+        const equipmentData = [
+            // KAMERA & LENSA
+            { id: "c1", cat: "cam", name: "Mirrorless Sony A7III", desc: "Fullframe, bagus untuk low-light & sinematik." },
+            { id: "c2", cat: "cam", name: "Camcorder Panasonic PX270", desc: "Ergonomis, zoom jauh, cocok untuk liputan/broadcasting." },
+            { id: "c3", cat: "cam", name: "Action Cam GoPro Hero 11", desc: "Kecil, tahan banting, anti air." },
+            { id: "c4", cat: "cam", name: "Cinema Camera RED Komodo", desc: "Kualitas bioskop, butuh setup rumit." },
+            { id: "c5", cat: "cam", name: "Lensa Fix/Prime 50mm f/1.8", desc: "Bokeh tajam, butuh jarak tetap." },
+            { id: "c6", cat: "cam", name: "Lensa Zoom 24-70mm f/2.8", desc: "Fleksibel untuk berbagai ukuran frame." },
+            
+            // AUDIO
+            { id: "a1", cat: "audio", name: "Mic Shotgun (Boom) + Blimp/Deadcat", desc: "Fokus arah depan, bulu pelindung cegah suara angin." },
+            { id: "a2", cat: "audio", name: "Clip-on / Lavalier Wireless", desc: "Suara stabil meski subjek bergerak jauh." },
+            { id: "a3", cat: "audio", name: "Mic Condenser Studio", desc: "Sangat peka, cocok untuk suara vokalis/podcast di ruangan kedap." },
+            { id: "a4", cat: "audio", name: "Mic Dynamic (Handheld)", desc: "Cocok untuk reporter lapangan/vokal panggung." },
+            { id: "a5", cat: "audio", name: "Audio Recorder Zoom H4n", desc: "Merekam audio terpisah kualitas tinggi." },
+
+            // CAHAYA
+            { id: "l1", cat: "light", name: "LED Panel Bi-Color (Portable)", desc: "Bisa diatur suhu warna, pakai baterai." },
+            { id: "l2", cat: "light", name: "Studio Strobe / Flash", desc: "Hanya untuk fotografi, bukan video." },
+            { id: "l3", cat: "light", name: "3-Point Lighting Kit (Softbox)", desc: "Standar wawancara indoor (Key, Fill, Back)." },
+            { id: "l4", cat: "light", name: "Reflektor 5-in-1", desc: "Memantulkan cahaya matahari atau lampu utama." },
+
+            // GRIP / SUPPORT
+            { id: "g1", cat: "grip", name: "Tripod Fluid Head (Video)", desc: "Panning dan tilting mulus." },
+            { id: "g2", cat: "grip", name: "Tripod Ball Head (Foto)", desc: "Fleksibel untuk foto, kaku untuk video." },
+            { id: "g3", cat: "grip", name: "Gimbal Stabilizer (Ronin/Zhiyun)", desc: "Meredam guncangan saat kamera berjalan." },
+            { id: "g4", cat: "grip", name: "Monopod", desc: "Ringkas, menahan beban kamera untuk liputan cepat." },
+        ];
+
+        const catNames = {
+            "cam": "Kamera & Lensa",
+            "audio": "Tata Suara (Audio)",
+            "light": "Tata Cahaya (Lighting)",
+            "grip": "Support / Grip"
+        };
+
+        // --- STATE VARIABEL ---
+        let projectData = {
+            team: "",
+            className: "",
+            scenario: "",
+            photo: "" // Menyimpan foto Base64
+        };
+        let selectedItems = []; // Array of IDs
+        let justifications = {}; // { "cam": "alasan...", "audio": "alasan..." }
+        let currentTab = 'cam';
+
+        // --- UTILITY ---
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('-translate-y-[150%]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-[150%]', 'opacity-0');
+            }, 3000);
+        }
+
+        // --- PENANGANAN UPLOAD FOTO ---
+        document.getElementById('input-photo').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validasi ukuran maksimal 2MB
+                if(file.size > 2 * 1024 * 1024) {
+                    showToast("Ukuran foto maksimal 2MB. Silakan pilih foto lain.");
+                    this.value = ''; 
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    projectData.photo = event.target.result;
+                    document.getElementById('photo-preview').innerHTML = `<img src="${projectData.photo}" class="w-full h-full object-cover">`;
+                    document.getElementById('photo-label').innerText = "Foto Berhasil Dipilih";
+                    document.getElementById('photo-label').classList.replace('text-blue-400', 'text-emerald-400');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- STEP 1 to 2 ---
+        function goToStep2() {
+            projectData.team = document.getElementById('input-team').value.trim();
+            projectData.className = document.getElementById('input-class').value;
+            
+            const scenarioRadio = document.querySelector('input[name="scenario"]:checked');
+            
+            if (!projectData.team || !projectData.className || !projectData.photo || !scenarioRadio) {
+                showToast("Lengkapi nama, kelas, foto profil, dan pilih satu skenario terlebih dahulu.");
+                return;
+            }
+            
+            projectData.scenario = scenarioRadio.value;
+            document.getElementById('display-scenario').innerText = projectData.scenario.split(":")[0];
+
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            window.scrollTo(0, 0);
+            
+            renderEquipmentList();
+        }
+
+        // --- RENDER STEP 2 (GUDANG ALAT) ---
+        function switchTab(catId) {
+            currentTab = catId;
+            // Update active button styling
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            const activeBtn = document.getElementById(`tab-${catId}`);
+            activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
+            activeBtn.classList.remove('bg-slate-800', 'text-slate-300');
+            
+            renderEquipmentList();
+        }
+
+        function renderEquipmentList() {
+            const container = document.getElementById('equipment-container');
+            container.innerHTML = '';
+            
+            const filteredData = equipmentData.filter(item => item.cat === currentTab);
+            
+            filteredData.forEach(item => {
+                const isChecked = selectedItems.includes(item.id) ? "checked" : "";
+                
+                const html = `
+                    <div class="relative">
+                        <input type="checkbox" id="item-${item.id}" value="${item.id}" class="gear-checkbox hidden" onchange="toggleItem('${item.id}')" ${isChecked}>
+                        <label for="item-${item.id}" class="flex items-start gap-4 p-3 rounded-xl border border-slate-600 bg-slate-800/50 cursor-pointer transition">
+                            <div class="icon-box w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center shrink-0 transition">
+                                <span class="font-bold text-lg">${isChecked ? '✓' : '+'}</span>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-100">${item.name}</h4>
+                                <p class="text-[10px] text-slate-400 mt-0.5 leading-snug">${item.desc}</p>
+                            </div>
+                        </label>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function toggleItem(id) {
+            const index = selectedItems.indexOf(id);
+            if (index > -1) {
+                selectedItems.splice(index, 1);
+            } else {
+                selectedItems.push(id);
+            }
+            document.getElementById('item-count').innerText = selectedItems.length;
+            renderEquipmentList(); // Re-render to update UI checkmarks
+        }
+
+        // --- STEP 2 to 3 ---
+        function goToStep3() {
+            if(selectedItems.length === 0) {
+                showToast("Pilih minimal 1 peralatan produksi terlebih dahulu!");
+                return;
+            }
+
+            // Tentukan kategori apa saja yang dipilih
+            const selectedCategories = new Set();
+            selectedItems.forEach(id => {
+                const item = equipmentData.find(e => e.id === id);
+                if(item) selectedCategories.add(item.cat);
+            });
+
+            // Render form justifikasi
+            const container = document.getElementById('justification-container');
+            container.innerHTML = '';
+
+            Array.from(selectedCategories).forEach(cat => {
+                const itemsInCat = selectedItems
+                    .map(id => equipmentData.find(e => e.id === id))
+                    .filter(item => item && item.cat === cat)
+                    .map(item => `<li class="ml-4 list-disc text-blue-300">${item.name}</li>`)
+                    .join('');
+
+                const html = `
+                    <div class="bg-slate-800/50 border border-slate-600 rounded-xl p-4">
+                        <h4 class="text-sm font-bold text-white border-b border-slate-600 pb-2 mb-3">Divisi: ${catNames[cat]}</h4>
+                        <div class="mb-3 text-[10px] text-slate-300">
+                            Pilihan Anda:
+                            <ul class="mt-1 font-semibold">${itemsInCat}</ul>
+                        </div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Alasan Pemilihan (Wajib diisi):</label>
+                        <textarea id="just-${cat}" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition" placeholder="Jelaskan alasan teknis mengapa alat tersebut cocok untuk skenario yang dipilih..."></textarea>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-3').classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        // --- STEP 3 to 4 (FINISH) ---
+        function goToStep4() {
+            // Validasi justifikasi
+            let allFilled = true;
+            const textareas = document.querySelectorAll('textarea[id^="just-"]');
+            
+            textareas.forEach(ta => {
+                const cat = ta.id.split('-')[1];
+                const text = ta.value.trim();
+                justifications[cat] = text;
+                if(!text) allFilled = false;
+            });
+
+            if(!allFilled) {
+                showToast("Harap isi semua alasan pemilihan alat untuk setiap divisi!");
+                return;
+            }
+
+            // --- BUILD REPORT UI ---
+            document.getElementById('res-team').innerText = projectData.team;
+            document.getElementById('res-class').innerText = projectData.className;
+            document.getElementById('res-scenario').innerText = projectData.scenario;
+            
+            // Tampilkan foto di laporan
+            if(projectData.photo) {
+                document.getElementById('res-photo').src = projectData.photo;
+                document.getElementById('res-photo').classList.remove('hidden');
+                document.getElementById('res-photo-placeholder').classList.add('hidden');
+            }
+
+            const reportContainer = document.getElementById('res-equipment-list');
+            reportContainer.innerHTML = '';
+
+            // Group by category for the report
+            Object.keys(justifications).forEach(cat => {
+                const items = selectedItems
+                    .map(id => equipmentData.find(e => e.id === id))
+                    .filter(item => item && item.cat === cat);
+                
+                let itemListHTML = '';
+                items.forEach(item => {
+                    itemListHTML += `<span class="inline-block bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded mr-1 mb-1">${item.name}</span>`;
+                });
+
+                const html = `
+                    <div class="border-l-4 border-slate-800 pl-4 py-1">
+                        <h4 class="text-sm font-extrabold text-slate-900 uppercase tracking-wide mb-2">${catNames[cat]}</h4>
+                        <div class="mb-2">${itemListHTML}</div>
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                            <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Argumen / Analisis Teknis:</p>
+                            <p class="text-xs text-slate-700 italic leading-relaxed">"${justifications[cat]}"</p>
+                        </div>
+                    </div>
+                `;
+                reportContainer.innerHTML += html;
+            });
+
+            document.getElementById('main-header').classList.add('hidden');
+            document.getElementById('step-3').classList.add('hidden');
+            
+            // Expand layout for PDF printing and force white background
+            document.getElementById('app-container').classList.remove('max-w-2xl', 'px-4'); 
+            document.body.style.background = "white"; 
+            
+            document.getElementById('step-4').classList.remove('hidden');
+            window.scrollTo(0, 0); 
+        }
+
+        // --- PDF EXPORT DENGAN FALLBACK ---
+        function exportToPDF() {
+            showToast("Sedang memproses dokumen PDF...");
+            
+            // Memastikan layar terkunci di posisi paling atas agar tidak ada ruang kosong di PDF
+            window.scrollTo(0,0); 
+            
+            const btn = document.getElementById('btn-export');
+            const originalBtnText = btn.innerHTML;
+            
+            btn.innerHTML = `<svg class="animate-spin w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...`;
+            btn.disabled = true;
+
+            const element = document.getElementById('pdf-content');
+            const fileName = `Proposal_AV_${projectData.className.replace(/\s/g,'')}_${projectData.team.substring(0,10).replace(/[^a-zA-Z0-9]/g, '')}.pdf`;
+            
+            const opt = {
+                margin:       0,
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Tambahkan padding sementara khusus untuk proses export
+            element.style.padding = "20px";
+
+            // Gunakan metode outputPdf('blob') untuk mengambil file mentahnya
+            html2pdf().set(opt).from(element).outputPdf('blob').then(function(pdfBlob) {
+                element.style.padding = "0px";
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+
+                // Buat objek File dari Blob (File PDF murni)
+                const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+                // Cek apakah sistem HP mendukung fitur "Share" bawaan (Web Share API)
+                if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    // Jika mendukung, langsung buka laci berbagi (Share Sheet) HP
+                    navigator.share({
+                        files: [pdfFile],
+                        title: 'Tugas Proposal AV',
+                        text: 'Berikut adalah hasil Tugas Proposal Alat AV.'
+                    }).then(() => {
+                        showToast("Aksi Berbagi Berhasil.");
+                    }).catch((error) => {
+                        console.log('Share dibatalkan atau gagal', error);
+                        // Jika siswa membatalkan share, tawarkan unduhan manual
+                        fallbackDownload(pdfBlob, fileName);
+                    });
+                } else {
+                    // Jika HP lawas tidak mendukung Share, gunakan unduhan klasik
+                    fallbackDownload(pdfBlob, fileName);
+                }
+            }).catch(err => {
+                console.error(err);
+                showToast("Gagal memproses PDF.");
+                element.style.padding = "0px";
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+            });
+        }
+
+        // Fungsi unduh manual klasik (Fallback)
+        function fallbackDownload(blob, filename) {
+            try {
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+                showToast("Mencoba mengunduh file...");
+            } catch (err) {
+                console.error(err);
+            }
+            
+            // Tampilkan kotak peringatan & tombol cetak sistem
+            document.getElementById('download-warning').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+```
